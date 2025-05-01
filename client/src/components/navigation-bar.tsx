@@ -1,15 +1,15 @@
 import { Link, useLocation } from "wouter";
-import { Menu, X } from "lucide-react";
+import { Menu, X, User as UserIcon, LogOut } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { useReplitAuth } from "@/hooks/use-replit-auth";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function NavigationBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   
-  // Use Replit Auth
-  const { user, isAuthenticated, isLoading } = useReplitAuth();
+  // Use Auth System
+  const { user, isLoading, logoutMutation } = useAuth();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -44,16 +44,20 @@ export default function NavigationBar() {
           <div className="hidden md:flex items-center space-x-4">
             {user ? (
               <div className="flex items-center space-x-4">
-                <span className="text-[#d1d5db]">Hi, {user.username}</span>
-                <Link href="/profile" className="text-[#d1d5db] hover:text-white transition duration-300">
+                <span className="text-[#d1d5db]">
+                  Hi, {user.displayName || user.username}
+                </span>
+                <Link href="/profile" className="text-[#d1d5db] hover:text-white transition duration-300 flex items-center">
+                  <UserIcon className="w-4 h-4 mr-2" />
                   Profile
                 </Link>
-                <a
-                  href="/api/logout"
-                  className="text-[#d1d5db] hover:text-white px-3 py-2 rounded-md hover:bg-[#1f2937]/50 transition-colors"
+                <button
+                  onClick={() => logoutMutation.mutate()}
+                  className="text-[#d1d5db] hover:text-white px-3 py-2 rounded-md hover:bg-[#1f2937]/50 transition-colors flex items-center"
                 >
+                  <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
-                </a>
+                </button>
               </div>
             ) : (
               <Link href="/auth" className="text-[#d1d5db] hover:text-white transition duration-300">
@@ -101,15 +105,16 @@ export default function NavigationBar() {
                 <Link href="/profile" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">
                   Profile ({user.username})
                 </Link>
-                <a
-                  href="/api/logout"
-                  className="block w-full text-left px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300"
+                <button
                   onClick={() => {
+                    logoutMutation.mutate();
                     setMobileMenuOpen(false);
                   }}
+                  className="block w-full text-left px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300 flex items-center"
                 >
+                  <LogOut className="w-4 h-4 mr-2" />
                   Sign Out
-                </a>
+                </button>
               </>
             ) : (
               <Link href="/auth" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">

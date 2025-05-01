@@ -54,19 +54,25 @@ function updateUserSession(
   user.expires_at = user.claims?.exp;
 }
 
-async function upsertUser(
-  claims: any,
-) {
-  await storage.upsertUser({
-    username: claims["username"] || "user_" + claims["sub"],
-    email: claims["email"],
-    displayName: claims["first_name"] 
-      ? `${claims["first_name"]} ${claims["last_name"] || ""}`
-      : claims["username"] || "User",
-    profilePicture: claims["profile_image_url"],
+// Transform claim data into user data with type safety
+function mapClaimsToUserData(claims: Record<string, any>) {
+  const sub = claims.sub?.toString() || "";
+  const username = claims.username?.toString() || "";
+  const email = claims.email?.toString() || null;
+  const firstName = claims.first_name?.toString() || "";
+  const lastName = claims.last_name?.toString() || "";
+  const profileImage = claims.profile_image_url?.toString() || null;
+  
+  return {
+    username: username || `user_${sub}`,
+    email: email,
+    displayName: firstName 
+      ? `${firstName} ${lastName}`.trim()
+      : username || "User",
+    profilePicture: profileImage,
     provider: "replit",
-    providerId: claims["sub"],
-  });
+    providerId: sub,
+  };
 }
 
 export async function setupAuth(app: Express) {
@@ -81,10 +87,26 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    try {
+      // Create user session object
+      const userSession: any = {};
+      updateUserSession(userSession, tokens);
+      
+      // Create or update user in database
+      const claims = tokens.claims();
+      if (claims) {
+        const userData = await storage.upsertUser(mapClaimsToUserData(claims));
+        
+        // Merge user data with session
+        userSession.dbUser = userData;
+      }
+      
+      // Complete authentication
+      verified(null, userSession);
+    } catch (error) {
+      console.error("Error in authentication verify callback:", error);
+      verified(error as Error);
+    }
   };
 
   for (const domain of process.env
