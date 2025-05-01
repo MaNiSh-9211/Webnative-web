@@ -15,13 +15,14 @@ export const sessions = pgTable(
 );
 
 export const users = pgTable("users", {
-  id: varchar("id").primaryKey().notNull(),
+  id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").unique(),
-  firstName: text("first_name"),
-  lastName: text("last_name"),
-  bio: text("bio"),
-  profileImageUrl: text("profile_image_url"),
+  password: text("password"),
+  displayName: text("display_name"),
+  profilePicture: text("profile_picture"),
+  provider: text("provider"), // 'local', 'google', 'github'
+  providerId: text("provider_id"), // ID from OAuth provider
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -32,7 +33,7 @@ export type UpsertUser = typeof users.$inferInsert;
 
 export const userSettings = pgTable("user_settings", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   allowFileAccess: boolean("allow_file_access").default(true).notNull(),
   allowCommandExecution: boolean("allow_command_execution").default(false).notNull(),
   notificationsEnabled: boolean("notifications_enabled").default(true).notNull(),
@@ -42,7 +43,7 @@ export const userSettings = pgTable("user_settings", {
 
 export const websitePermissions = pgTable("website_permissions", {
   id: serial("id").primaryKey(),
-  userId: text("user_id").references(() => users.id).notNull(),
+  userId: integer("user_id").references(() => users.id).notNull(),
   websiteUrl: text("website_url").notNull(),
   allowFileAccess: boolean("allow_file_access").default(false).notNull(),
   allowCommandExecution: boolean("allow_command_execution").default(false).notNull(),

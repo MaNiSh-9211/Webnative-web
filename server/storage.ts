@@ -1,18 +1,31 @@
 import { db } from "@db";
 import { users } from "@shared/schema";
-import { eq } from "drizzle-orm";
+import { eq, or, and, isNull } from "drizzle-orm";
 import { InsertUser, User, UpsertUser } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "@db";
+import mongoose from "mongoose";
 
 const PostgresSessionStore = connectPg(session);
 
+// Define the OAuth user data interface
+interface OAuthUserData {
+  providerId: string;
+  provider: string;
+  email?: string;
+  username: string;
+  displayName?: string;
+  profilePicture?: string;
+}
+
 interface IStorage {
   createUser(user: Partial<InsertUser>): Promise<User>;
-  getUser(id: string): Promise<User | undefined>;
+  getUser(id: number): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
+  getUserByProviderId(providerId: string, provider: string): Promise<User | undefined>;
+  findOrCreateOAuthUser(userData: OAuthUserData): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
   sessionStore: session.Store;
 }
