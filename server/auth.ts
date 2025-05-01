@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { setupOAuth } from "./oauth";
 
 declare global {
   namespace Express {
@@ -43,6 +44,9 @@ export function setupAuth(app: Express) {
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+  
+  // Set up OAuth strategies
+  setupOAuth(app);
 
   passport.use(
     new LocalStrategy(async (username, password, done) => {

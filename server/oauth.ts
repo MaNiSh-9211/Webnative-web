@@ -33,7 +33,7 @@ export function setupOAuth(app: Express): void {
         callbackURL: googleCredentials.callbackURL,
         scope: ["profile", "email"],
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: string, refreshToken: string, profile: any, done: any) => {
         try {
           const user = await storage.findOrCreateOAuthUser(profile, "google");
           return done(null, user);
@@ -53,7 +53,7 @@ export function setupOAuth(app: Express): void {
         callbackURL: githubCredentials.callbackURL,
         scope: ["user:email"],
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: string, refreshToken: string, profile: any, done: any) => {
         try {
           const user = await storage.findOrCreateOAuthUser(profile, "github");
           return done(null, user);
