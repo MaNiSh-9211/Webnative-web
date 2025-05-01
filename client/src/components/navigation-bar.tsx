@@ -54,6 +54,9 @@ export default function NavigationBar() {
             {user ? (
               <div className="flex items-center space-x-4">
                 <span className="text-[#d1d5db]">Hi, {user.username}</span>
+                <Link href="/profile" className="text-[#d1d5db] hover:text-white transition duration-300">
+                  Profile
+                </Link>
                 <Button
                   variant="ghost"
                   className="text-[#d1d5db] hover:text-white"
@@ -105,16 +108,21 @@ export default function NavigationBar() {
               Demo
             </Link>
             {user ? (
-              <button
-                className="block w-full text-left px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300"
-                onClick={() => {
-                  logoutMutation.mutate();
-                  setMobileMenuOpen(false);
-                }}
-                disabled={logoutMutation.isPending}
-              >
-                Sign Out ({user.username})
-              </button>
+              <>
+                <Link href="/profile" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">
+                  Profile ({user.username})
+                </Link>
+                <button
+                  className="block w-full text-left px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300"
+                  onClick={() => {
+                    logoutMutation.mutate();
+                    setMobileMenuOpen(false);
+                  }}
+                  disabled={logoutMutation.isPending}
+                >
+                  Sign Out
+                </button>
+              </>
             ) : (
               <Link href="/auth" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">
                 Sign In
