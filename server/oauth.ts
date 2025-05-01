@@ -3,6 +3,7 @@ import { Strategy as GoogleStrategy } from "passport-google-oauth20";
 import { Strategy as GitHubStrategy } from "passport-github2";
 import { Express } from "express";
 import { storage } from "./storage";
+import { generateToken } from "./jwt";
 
 export function setupOAuth(app: Express): void {
   // Google OAuth Strategy
@@ -73,6 +74,17 @@ export function setupOAuth(app: Express): void {
       failureRedirect: "/auth?error=google-auth-failed",
     }),
     (req, res) => {
+      if (req.user) {
+        // Generate JWT token
+        const token = generateToken(req.user);
+        
+        // Set the token as a cookie
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+        });
+      }
       res.redirect("/");
     }
   );
@@ -89,6 +101,17 @@ export function setupOAuth(app: Express): void {
       failureRedirect: "/auth?error=github-auth-failed",
     }),
     (req, res) => {
+      if (req.user) {
+        // Generate JWT token
+        const token = generateToken(req.user);
+        
+        // Set the token as a cookie
+        res.cookie("token", token, {
+          httpOnly: true,
+          secure: process.env.NODE_ENV === 'production',
+          maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+        });
+      }
       res.redirect("/");
     }
   );
