@@ -1,7 +1,6 @@
-import { useReplitAuth } from "@/hooks/use-replit-auth";
 import { Loader2 } from "lucide-react";
 import { Redirect, Route } from "wouter";
-import { useState, useEffect } from "react";
+import { useReplitAuth } from "@/hooks/use-replit-auth";
 
 export function ProtectedRoute({
   path,
