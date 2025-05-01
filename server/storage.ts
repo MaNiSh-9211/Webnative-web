@@ -92,25 +92,6 @@ class DatabaseStorage implements IStorage {
     
     return username;
   }
-  
-  // Helper method to generate a unique username
-  private async generateUniqueUsername(baseUsername: string): Promise<string> {
-    // Remove spaces and special characters
-    let username = baseUsername.toLowerCase().replace(/[^a-z0-9]/g, '');
-    
-    // Check if username exists
-    let user = await this.getUserByUsername(username);
-    let counter = 1;
-    
-    // If username exists, append a number
-    while (user) {
-      username = `${baseUsername.toLowerCase().replace(/[^a-z0-9]/g, '')}${counter}`;
-      user = await this.getUserByUsername(username);
-      counter++;
-    }
-    
-    return username;
-  }
 }
 
 export const storage = new DatabaseStorage();

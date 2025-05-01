@@ -60,23 +60,8 @@ export default function AuthPage() {
     }
   }, [oauthError, toast]);
   
-  // Fetch the current user
-  const { data: user, isLoading: userLoading } = useQuery({
-    queryKey: ['/api/user'],
-    queryFn: async () => {
-      try {
-        const res = await fetch('/api/user');
-        if (res.ok) {
-          return res.json();
-        }
-        return null;
-      } catch (error) {
-        console.error("Error fetching user:", error);
-        return null;
-      }
-    },
-    retry: false
-  });
+  // Use Replit Auth
+  const { user, isLoading: userLoading } = useReplitAuth();
 
   // Login mutation
   const loginMutation = useMutation({
