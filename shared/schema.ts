@@ -6,13 +6,24 @@ import { relations } from "drizzle-orm";
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),
+  email: text("email").unique(),
+  displayName: text("display_name"),
+  profilePicture: text("profile_picture"),
+  googleId: text("google_id").unique(),
+  githubId: text("github_id").unique(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow(),
 });
 
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   password: true,
+  email: true,
+  displayName: true,
+  profilePicture: true,
+  googleId: true,
+  githubId: true,
 });
 
 export const userSettings = pgTable("user_settings", {
