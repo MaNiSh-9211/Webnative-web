@@ -13,7 +13,7 @@ export function setupOAuth(app: Express): void {
         clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
         callbackURL: `${process.env.BASE_URL || "http://localhost:3000"}/api/auth/google/callback`,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: string, refreshToken: string, profile: any, done: (error: Error | null, user?: any) => void) => {
         try {
           // Find or create user
           const user = await storage.findOrCreateOAuthUser({
@@ -41,7 +41,7 @@ export function setupOAuth(app: Express): void {
         clientSecret: process.env.GITHUB_CLIENT_SECRET!,
         callbackURL: `${process.env.BASE_URL || "http://localhost:3000"}/api/auth/github/callback`,
       },
-      async (accessToken, refreshToken, profile, done) => {
+      async (accessToken: string, refreshToken: string, profile: any, done: (error: Error | null, user?: any) => void) => {
         try {
           // Find or create user
           const user = await storage.findOrCreateOAuthUser({

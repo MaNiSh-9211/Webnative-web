@@ -52,11 +52,20 @@ export function setupAuth(app: Express) {
     new LocalStrategy(async (username, password, done) => {
       try {
         const user = await storage.getUserByUsername(username);
-        if (!user || !(await comparePasswords(password, user.password))) {
-          return done(null, false);
-        } else {
-          return done(null, user);
+        
+        if (!user) {
+          return done(null, false, { message: "User not found" });
         }
+        
+        if (!user.password) {
+          return done(null, false, { message: "Please login using OAuth provider" });
+        }
+        
+        if (!(await comparePasswords(password, user.password))) {
+          return done(null, false, { message: "Incorrect password" });
+        }
+        
+        return done(null, user);
       } catch (error) {
         return done(error);
       }

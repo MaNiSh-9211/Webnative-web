@@ -1,6 +1,18 @@
 import express, { type Request, Response, NextFunction } from "express";
 import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
+import mongoose from "mongoose";
+
+// Connect to MongoDB for traditional authentication if MONGO_URI is provided
+if (process.env.MONGO_URI) {
+  mongoose.connect(process.env.MONGO_URI)
+    .then(() => {
+      console.log("Connected to MongoDB");
+    })
+    .catch((err) => {
+      console.error("MongoDB connection error:", err);
+    });
+}
 
 const app = express();
 app.use(express.json());

@@ -45,12 +45,65 @@ class DatabaseStorage implements IStorage {
     return user;
   }
 
-  async getUser(id: string): Promise<User | undefined> {
+  async getUser(id: number): Promise<User | undefined> {
     const user = await db.query.users.findFirst({
       where: eq(users.id, id)
     });
 
     return user;
+  }
+  
+  async getUserByProviderId(providerId: string, provider: string): Promise<User | undefined> {
+    const user = await db.query.users.findFirst({
+      where: and(
+        eq(users.providerId, providerId),
+        eq(users.provider, provider)
+      )
+    });
+    
+    return user;
+  }
+  
+  async findOrCreateOAuthUser(userData: OAuthUserData): Promise<User> {
+    // First try to find user by provider ID
+    let user = await this.getUserByProviderId(userData.providerId, userData.provider);
+    
+    // If not found, try by email if provided
+    if (!user && userData.email) {
+      user = await this.getUserByEmail(userData.email);
+    }
+    
+    // If user exists, update provider info
+    if (user) {
+      const [updatedUser] = await db.update(users)
+        .set({
+          provider: userData.provider,
+          providerId: userData.providerId,
+          displayName: userData.displayName || user.displayName,
+          profilePicture: userData.profilePicture || user.profilePicture,
+          updatedAt: new Date()
+        })
+        .where(eq(users.id, user.id))
+        .returning();
+      
+      return updatedUser;
+    }
+    
+    // Create new user if not found
+    const username = await this.generateUniqueUsername(userData.username);
+    
+    const [newUser] = await db.insert(users)
+      .values({
+        username,
+        email: userData.email,
+        displayName: userData.displayName,
+        profilePicture: userData.profilePicture,
+        provider: userData.provider,
+        providerId: userData.providerId,
+      })
+      .returning();
+    
+    return newUser;
   }
   
   async upsertUser(userData: UpsertUser): Promise<User> {
