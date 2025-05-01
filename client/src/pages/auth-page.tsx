@@ -17,8 +17,6 @@ import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
-import { useMutation } from "@tanstack/react-query";
-import { apiRequest } from "@/lib/queryClient";
 import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
@@ -62,59 +60,14 @@ export default function AuthPage() {
   }, [oauthError, toast]);
   
   // Use Auth context
-  const { user, isLoading: userLoading, loginWithGoogle, loginWithGithub } = useAuth();
-
-  // Login mutation
-  const loginMutation = useMutation({
-    mutationFn: async (credentials: LoginFormValues) => {
-      const res = await apiRequest("POST", "/api/login", credentials);
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Login failed");
-      }
-      return await res.json() as User;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
-      });
-      navigate("/");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Login failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
-  // Register mutation
-  const registerMutation = useMutation({
-    mutationFn: async (userData: Omit<RegisterFormValues, "confirmPassword">) => {
-      const res = await apiRequest("POST", "/api/register", userData);
-      if (!res.ok) {
-        const errorText = await res.text();
-        throw new Error(errorText || "Registration failed");
-      }
-      return await res.json() as User;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Account created!",
-        description: "Your account has been created successfully.",
-      });
-      navigate("/");
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Registration failed",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  const { 
+    user, 
+    isLoading: userLoading, 
+    loginWithGoogle, 
+    loginWithGithub,
+    loginMutation,
+    registerMutation 
+  } = useAuth();
   
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -134,12 +87,42 @@ export default function AuthPage() {
   });
   
   const onLoginSubmit = (values: LoginFormValues) => {
-    loginMutation.mutate(values);
+    loginMutation.mutate(values, {
+      onSuccess: () => {
+        toast({
+          title: "Welcome back!",
+          description: "You have successfully logged in.",
+        });
+        navigate("/");
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Login failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    });
   };
   
   const onRegisterSubmit = (values: RegisterFormValues) => {
     const { confirmPassword, ...registerData } = values;
-    registerMutation.mutate(registerData);
+    registerMutation.mutate(registerData, {
+      onSuccess: () => {
+        toast({
+          title: "Account created!",
+          description: "Your account has been created successfully.",
+        });
+        navigate("/");
+      },
+      onError: (error: Error) => {
+        toast({
+          title: "Registration failed",
+          description: error.message,
+          variant: "destructive",
+        });
+      }
+    });
   };
   
   // Redirect if user is already logged in
@@ -244,8 +227,8 @@ export default function AuthPage() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <a 
-                      href="/api/auth/google" 
+                    <button 
+                      onClick={loginWithGoogle}
                       className="flex items-center justify-center bg-white text-gray-800 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 transition"
                     >
                       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -255,9 +238,9 @@ export default function AuthPage() {
                         />
                       </svg>
                       Google
-                    </a>
-                    <a 
-                      href="/api/auth/github" 
+                    </button>
+                    <button 
+                      onClick={loginWithGithub}
                       className="flex items-center justify-center bg-[#333] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#2b2b2b] transition"
                     >
                       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -267,7 +250,7 @@ export default function AuthPage() {
                         />
                       </svg>
                       GitHub
-                    </a>
+                    </button>
                   </div>
                   
                   <p className="text-center text-[#9ca3af] pt-2">
@@ -366,8 +349,8 @@ export default function AuthPage() {
                   </div>
                   
                   <div className="grid grid-cols-2 gap-4">
-                    <a 
-                      href="/api/auth/google" 
+                    <button 
+                      onClick={loginWithGoogle}
                       className="flex items-center justify-center bg-white text-gray-800 rounded-md px-4 py-2 text-sm font-medium hover:bg-gray-50 transition"
                     >
                       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -377,9 +360,9 @@ export default function AuthPage() {
                         />
                       </svg>
                       Google
-                    </a>
-                    <a 
-                      href="/api/auth/github" 
+                    </button>
+                    <button 
+                      onClick={loginWithGithub}
                       className="flex items-center justify-center bg-[#333] text-white rounded-md px-4 py-2 text-sm font-medium hover:bg-[#2b2b2b] transition"
                     >
                       <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
@@ -389,7 +372,7 @@ export default function AuthPage() {
                         />
                       </svg>
                       GitHub
-                    </a>
+                    </button>
                   </div>
                   
                   <p className="text-center text-[#9ca3af] pt-2">
@@ -398,7 +381,7 @@ export default function AuthPage() {
                       onClick={() => setActiveTab("login")} 
                       className="text-[#8a63d2] hover:text-[#a78bdd] font-medium"
                     >
-                      Sign in
+                      Sign in here
                     </button>
                   </p>
                 </div>
@@ -407,59 +390,51 @@ export default function AuthPage() {
           </div>
           
           {/* Hero Section */}
-          <div className="hidden lg:flex flex-col justify-center p-8 rounded-lg gradient-border relative overflow-hidden bg-[#1f2937]/30 backdrop-blur-sm">
-            <div className="relative z-10">
-              <h2 className="text-3xl font-bold mb-4">
-                <span className="gradient-text">Unlock the Web's</span>
-                <span className="block mt-2">Full Potential</span>
-              </h2>
-              
-              <p className="text-lg text-[#d1d5db] mb-8">
-                Connect your websites to your device's filesystem and command capabilities, all with secure permission controls.
-              </p>
-              
-              <div className="space-y-4">
-                <div className="flex items-start">
-                  <div className="mt-1 mr-4 text-[#10b981]">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Secure by Design</h4>
-                    <p className="text-[#9ca3af]">Complete control over what each website can access on your device.</p>
-                  </div>
+          <div className="hidden lg:flex flex-col justify-center relative">
+            <div className="absolute top-0 right-0 w-80 h-80 bg-gradient-to-r from-purple-500/10 to-blue-500/10 rounded-full -translate-y-1/2 translate-x-1/3 blur-3xl"></div>
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-gradient-to-r from-blue-500/10 to-cyan-500/10 rounded-full translate-y-1/2 -translate-x-1/3 blur-3xl"></div>
+            
+            <h2 className="text-4xl font-bold text-white mb-6">
+              Unlock the Full Power of the <span className="bg-clip-text text-transparent bg-gradient-to-r from-[#8a63d2] to-[#3b82f6]">Web</span>
+            </h2>
+            
+            <div className="space-y-6 text-[#9ca3af]">
+              <div className="flex items-start">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#8a63d2]/20 to-[#3b82f6]/20 flex items-center justify-center mr-4">
+                  <svg className="w-5 h-5 text-[#8a63d2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                  </svg>
                 </div>
-                
-                <div className="flex items-start">
-                  <div className="mt-1 mr-4 text-[#10b981]">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Full File System Access</h4>
-                    <p className="text-[#9ca3af]">Read and write files directly from web applications.</p>
-                  </div>
+                <div>
+                  <h3 className="text-xl font-medium text-white mb-1">File System Access</h3>
+                  <p className="text-[#9ca3af]">Securely access your device's file system to improve workflows and performance.</p>
                 </div>
-                
-                <div className="flex items-start">
-                  <div className="mt-1 mr-4 text-[#10b981]">
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
-                    </svg>
-                  </div>
-                  <div>
-                    <h4 className="font-semibold">Execute Commands</h4>
-                    <p className="text-[#9ca3af]">Run system commands safely from your web browser.</p>
-                  </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#8a63d2]/20 to-[#3b82f6]/20 flex items-center justify-center mr-4">
+                  <svg className="w-5 h-5 text-[#8a63d2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 20l4-16m4 4l4 4-4 4M6 16l-4-4 4-4" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-medium text-white mb-1">Command Execution</h3>
+                  <p className="text-[#9ca3af]">Run local commands through web applications with robust permission controls.</p>
+                </div>
+              </div>
+              
+              <div className="flex items-start">
+                <div className="flex-shrink-0 w-10 h-10 rounded-full bg-gradient-to-r from-[#8a63d2]/20 to-[#3b82f6]/20 flex items-center justify-center mr-4">
+                  <svg className="w-5 h-5 text-[#8a63d2]" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                  </svg>
+                </div>
+                <div>
+                  <h3 className="text-xl font-medium text-white mb-1">Fine-Grained Permissions</h3>
+                  <p className="text-[#9ca3af]">Control exactly what websites can access with domain-specific permission models.</p>
                 </div>
               </div>
             </div>
-            
-            {/* Background effects */}
-            <div className="absolute top-1/4 right-0 w-64 h-64 bg-[#6d28d9]/20 rounded-full filter blur-3xl"></div>
-            <div className="absolute bottom-0 left-1/4 w-80 h-80 bg-[#3b82f6]/10 rounded-full filter blur-3xl"></div>
           </div>
         </div>
       </div>

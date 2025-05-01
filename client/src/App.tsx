@@ -5,11 +5,13 @@ import HomePage from "@/pages/home-page";
 import AboutPage from "@/pages/about-page";
 import DemoPage from "@/pages/demo-page";
 import AuthPage from "@/pages/auth-page";
-import ReplitAuthPage from "@/pages/replit-auth-page";
 import ProfilePage from "@/pages/profile-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import NavigationBar from "./components/navigation-bar";
 import Footer from "./components/footer";
+import { AuthProvider } from "@/hooks/use-auth";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClient } from "@/lib/queryClient";
 
 function Router() {
   return (
@@ -18,8 +20,7 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <ProtectedRoute path="/demo" component={DemoPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
-      <Route path="/auth" component={ReplitAuthPage} />
-      <Route path="/auth-legacy" component={AuthPage} />
+      <Route path="/auth" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
@@ -27,14 +28,18 @@ function Router() {
 
 function App() {
   return (
-    <div className="min-h-screen flex flex-col bg-[#030712]">
-      <NavigationBar />
-      <main className="flex-grow">
-        <Router />
-      </main>
-      <Footer />
-      <Toaster />
-    </div>
+    <QueryClientProvider client={queryClient}>
+      <AuthProvider>
+        <div className="min-h-screen flex flex-col bg-[#030712]">
+          <NavigationBar />
+          <main className="flex-grow">
+            <Router />
+          </main>
+          <Footer />
+          <Toaster />
+        </div>
+      </AuthProvider>
+    </QueryClientProvider>
   );
 }
 

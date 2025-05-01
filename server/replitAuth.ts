@@ -58,13 +58,14 @@ async function upsertUser(
   claims: any,
 ) {
   await storage.upsertUser({
-    id: claims["sub"],
-    username: claims["username"],
+    username: claims["username"] || "user_" + claims["sub"],
     email: claims["email"],
-    firstName: claims["first_name"],
-    lastName: claims["last_name"],
-    bio: claims["bio"],
-    profileImageUrl: claims["profile_image_url"],
+    displayName: claims["first_name"] 
+      ? `${claims["first_name"]} ${claims["last_name"] || ""}`
+      : claims["username"] || "User",
+    profilePicture: claims["profile_image_url"],
+    provider: "replit",
+    providerId: claims["sub"],
   });
 }
 
