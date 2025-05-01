@@ -1,34 +1,38 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, varchar, jsonb, index } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
+// Session storage table for Replit Auth
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)],
+);
+
 export const users = pgTable("users", {
-  id: serial("id").primaryKey(),
+  id: varchar("id").primaryKey().notNull(),
   username: text("username").notNull().unique(),
-  password: text("password"),
   email: text("email").unique(),
-  displayName: text("display_name"),
-  profilePicture: text("profile_picture"),
-  googleId: text("google_id").unique(),
-  githubId: text("github_id").unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  bio: text("bio"),
+  profileImageUrl: text("profile_image_url"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
 
-export const insertUserSchema = createInsertSchema(users).pick({
-  username: true,
-  password: true,
-  email: true,
-  displayName: true,
-  profilePicture: true,
-  googleId: true,
-  githubId: true,
-});
+export const insertUserSchema = createInsertSchema(users);
+
+export type UpsertUser = typeof users.$inferInsert;
 
 export const userSettings = pgTable("user_settings", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").references(() => users.id).notNull(),
   allowFileAccess: boolean("allow_file_access").default(true).notNull(),
   allowCommandExecution: boolean("allow_command_execution").default(false).notNull(),
   notificationsEnabled: boolean("notifications_enabled").default(true).notNull(),
@@ -38,7 +42,7 @@ export const userSettings = pgTable("user_settings", {
 
 export const websitePermissions = pgTable("website_permissions", {
   id: serial("id").primaryKey(),
-  userId: integer("user_id").references(() => users.id).notNull(),
+  userId: text("user_id").references(() => users.id).notNull(),
   websiteUrl: text("website_url").notNull(),
   allowFileAccess: boolean("allow_file_access").default(false).notNull(),
   allowCommandExecution: boolean("allow_command_execution").default(false).notNull(),
