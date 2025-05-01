@@ -6,16 +6,23 @@ import { storage } from "./storage";
 
 // Utility function to ask for API keys
 const getOAuthCredentials = () => {
+  // Determine the base URL dynamically
+  const baseUrl = process.env.NODE_ENV === 'production' 
+    ? process.env.BASE_URL || 'https://webnative.replit.app' 
+    : 'https://' + process.env.REPL_SLUG + '.' + process.env.REPL_OWNER + '.repl.co';
+  
+  console.log('OAuth base URL:', baseUrl);
+  
   const googleCredentials = {
     clientID: process.env.GOOGLE_CLIENT_ID || "YOUR_GOOGLE_CLIENT_ID",
     clientSecret: process.env.GOOGLE_CLIENT_SECRET || "YOUR_GOOGLE_CLIENT_SECRET",
-    callbackURL: process.env.GOOGLE_CALLBACK_URL || "/api/auth/google/callback",
+    callbackURL: baseUrl + "/api/auth/google/callback",
   };
 
   const githubCredentials = {
     clientID: process.env.GITHUB_CLIENT_ID || "YOUR_GITHUB_CLIENT_ID",
     clientSecret: process.env.GITHUB_CLIENT_SECRET || "YOUR_GITHUB_CLIENT_SECRET",
-    callbackURL: process.env.GITHUB_CALLBACK_URL || "/api/auth/github/callback",
+    callbackURL: baseUrl + "/api/auth/github/callback",
   };
 
   return { googleCredentials, githubCredentials };
@@ -65,34 +72,42 @@ export function setupOAuth(app: Express): void {
   );
 
   // Google OAuth routes
-  app.get("/api/auth/google", 
-    passport.authenticate("google", { scope: ["profile", "email"] })
-  );
-
-  app.get(
-    "/api/auth/google/callback",
+  app.get("/api/auth/google", (req, res, next) => {
+    console.log("Starting Google OAuth flow");
     passport.authenticate("google", { 
-      failureRedirect: "/auth",
+      scope: ["profile", "email"],
+      prompt: 'consent',  // Always ask for consent to help with permission issues
+      accessType: 'offline' // Request a refresh token
+    })(req, res, next);
+  });
+
+  app.get("/api/auth/google/callback", (req, res, next) => {
+    console.log("Google OAuth callback received");
+    passport.authenticate("google", { 
+      failureRedirect: "/auth?error=google-auth-failed",
       session: true 
-    }),
-    (req, res) => {
-      res.redirect("/");
-    }
-  );
+    })(req, res, next);
+  }, (req, res) => {
+    console.log("Google OAuth successful, redirecting to home");
+    res.redirect("/");
+  });
 
   // GitHub OAuth routes
-  app.get("/api/auth/github", 
-    passport.authenticate("github", { scope: ["user:email"] })
-  );
-
-  app.get(
-    "/api/auth/github/callback",
+  app.get("/api/auth/github", (req, res, next) => {
+    console.log("Starting GitHub OAuth flow");
     passport.authenticate("github", { 
-      failureRedirect: "/auth",
+      scope: ["user:email"]
+    })(req, res, next);
+  });
+
+  app.get("/api/auth/github/callback", (req, res, next) => {
+    console.log("GitHub OAuth callback received");
+    passport.authenticate("github", { 
+      failureRedirect: "/auth?error=github-auth-failed",
       session: true 
-    }),
-    (req, res) => {
-      res.redirect("/");
-    }
-  );
+    })(req, res, next);
+  }, (req, res) => {
+    console.log("GitHub OAuth successful, redirecting to home");
+    res.redirect("/");
+  });
 }

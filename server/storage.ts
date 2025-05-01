@@ -5,6 +5,7 @@ import { InsertUser, User } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "@db";
+import { and, or, isNull } from "drizzle-orm";
 
 const PostgresSessionStore = connectPg(session);
 

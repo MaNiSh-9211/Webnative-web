@@ -43,6 +43,23 @@ export default function AuthPage() {
   const [_, navigate] = useLocation();
   const { toast } = useToast();
   
+  // Check for OAuth error in URL
+  const searchParams = new URLSearchParams(window.location.search);
+  const oauthError = searchParams.get('error');
+  
+  // Show error message if OAuth authentication failed
+  useEffect(() => {
+    if (oauthError) {
+      toast({
+        title: "Authentication Error",
+        description: oauthError === 'google-auth-failed' 
+          ? "Google authentication failed. Please try again or use another method." 
+          : "GitHub authentication failed. Please try again or use another method.",
+        variant: "destructive",
+      });
+    }
+  }, [oauthError, toast]);
+  
   // Fetch the current user
   const { data: user, isLoading: userLoading } = useQuery({
     queryKey: ['/api/user'],
