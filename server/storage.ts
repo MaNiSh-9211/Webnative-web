@@ -4,6 +4,7 @@ import { eq, or, and, isNull } from "drizzle-orm";
 import { InsertUser, User, UpsertUser } from "@shared/schema";
 import { pool } from "@db";
 import mongoose from "mongoose";
+import { mongoStorage } from "./mongo-storage";
 
 // Define the OAuth user data interface
 interface OAuthUserData {
@@ -152,4 +153,8 @@ class DatabaseStorage implements IStorage {
   }
 }
 
-export const storage = new DatabaseStorage();
+// Determine which storage implementation to use based on environment
+// If MONGODB_URI is provided, use MongoDB storage, otherwise use Postgres
+const useMongoStorage = process.env.MONGODB_URI !== undefined;
+
+export const storage: IStorage = useMongoStorage ? mongoStorage : new DatabaseStorage();
