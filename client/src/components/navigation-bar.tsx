@@ -1,24 +1,15 @@
-import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
+import { useReplitAuth } from "@/hooks/use-replit-auth";
 
 export default function NavigationBar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [location] = useLocation();
   
-  // Wrap the authentication logic with error handling
-  let user = null;
-  let logoutMutation = { mutate: () => {}, isPending: false };
-  
-  try {
-    const auth = useAuth();
-    user = auth.user;
-    logoutMutation = auth.logoutMutation;
-  } catch (error) {
-    console.error("Auth context not available:", error);
-  }
+  // Use Replit Auth
+  const { user, isAuthenticated, isLoading } = useReplitAuth();
 
   const toggleMobileMenu = () => {
     setMobileMenuOpen(!mobileMenuOpen);
@@ -57,14 +48,12 @@ export default function NavigationBar() {
                 <Link href="/profile" className="text-[#d1d5db] hover:text-white transition duration-300">
                   Profile
                 </Link>
-                <Button
-                  variant="ghost"
-                  className="text-[#d1d5db] hover:text-white"
-                  onClick={() => logoutMutation.mutate()}
-                  disabled={logoutMutation.isPending}
+                <a
+                  href="/api/logout"
+                  className="text-[#d1d5db] hover:text-white px-3 py-2 rounded-md hover:bg-[#1f2937]/50 transition-colors"
                 >
                   Sign Out
-                </Button>
+                </a>
               </div>
             ) : (
               <Link href="/auth" className="text-[#d1d5db] hover:text-white transition duration-300">
@@ -112,16 +101,15 @@ export default function NavigationBar() {
                 <Link href="/profile" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">
                   Profile ({user.username})
                 </Link>
-                <button
+                <a
+                  href="/api/logout"
                   className="block w-full text-left px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300"
                   onClick={() => {
-                    logoutMutation.mutate();
                     setMobileMenuOpen(false);
                   }}
-                  disabled={logoutMutation.isPending}
                 >
                   Sign Out
-                </button>
+                </a>
               </>
             ) : (
               <Link href="/auth" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">

@@ -5,6 +5,7 @@ import HomePage from "@/pages/home-page";
 import AboutPage from "@/pages/about-page";
 import DemoPage from "@/pages/demo-page";
 import AuthPage from "@/pages/auth-page";
+import ReplitAuthPage from "@/pages/replit-auth-page";
 import ProfilePage from "@/pages/profile-page";
 import { ProtectedRoute } from "./lib/protected-route";
 import NavigationBar from "./components/navigation-bar";
@@ -17,7 +18,8 @@ function Router() {
       <Route path="/about" component={AboutPage} />
       <ProtectedRoute path="/demo" component={DemoPage} />
       <ProtectedRoute path="/profile" component={ProfilePage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth" component={ReplitAuthPage} />
+      <Route path="/auth-legacy" component={AuthPage} />
       <Route component={NotFound} />
     </Switch>
   );
