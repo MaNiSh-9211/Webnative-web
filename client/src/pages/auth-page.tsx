@@ -19,7 +19,7 @@ import { Loader2 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
-import { useReplitAuth } from "@/hooks/use-replit-auth";
+import { useAuth } from "@/hooks/use-auth";
 import type { User } from "@shared/schema";
 
 const loginSchema = z.object({
@@ -61,8 +61,8 @@ export default function AuthPage() {
     }
   }, [oauthError, toast]);
   
-  // Use Replit Auth
-  const { user, isLoading: userLoading } = useReplitAuth();
+  // Use Auth context
+  const { user, isLoading: userLoading, loginWithGoogle, loginWithGithub } = useAuth();
 
   // Login mutation
   const loginMutation = useMutation({
