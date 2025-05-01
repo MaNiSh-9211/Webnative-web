@@ -1,16 +1,17 @@
 import passport from "passport";
 import { Strategy as LocalStrategy } from "passport-local";
-import { Express } from "express";
-import session from "express-session";
+import { Express, Request, Response, NextFunction } from "express";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import cookieParser from "cookie-parser";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User } from "@shared/schema";
 import { setupOAuth } from "./oauth";
+import { generateToken, isAuthenticated } from "./jwt";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends User {}
   }
 }
 
@@ -30,24 +31,14 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
-  const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || "webnative-secret-key",
-    resave: false,
-    saveUninitialized: false,
-    store: storage.sessionStore,
-    cookie: {
-      maxAge: 1000 * 60 * 60 * 24, // 1 day
-    }
-  };
-
-  app.set("trust proxy", 1);
-  app.use(session(sessionSettings));
+  // Initialize passport without sessions
+  app.use(cookieParser());
   app.use(passport.initialize());
-  app.use(passport.session());
   
   // Set up OAuth strategies
   setupOAuth(app);
 
+  // Local strategy for username/password login
   passport.use(
     new LocalStrategy(async (username, password, done) => {
       try {
@@ -61,7 +52,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Please login using OAuth provider" });
         }
         
-        if (!(await comparePasswords(password, user.password || ''))) {
+        if (!(await comparePasswords(password, user.password))) {
           return done(null, false, { message: "Incorrect password" });
         }
         
@@ -72,17 +63,8 @@ export function setupAuth(app: Express) {
     }),
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
-    try {
-      const user = await storage.getUser(id);
-      done(null, user);
-    } catch (error) {
-      done(error);
-    }
-  });
-
-  app.post("/api/register", async (req, res, next) => {
+  // Registration endpoint
+  app.post("/api/register", async (req, res) => {
     try {
       const existingUser = await storage.getUserByUsername(req.body.username);
       if (existingUser) {
@@ -94,41 +76,66 @@ export function setupAuth(app: Express) {
         password: await hashPassword(req.body.password),
       });
 
-      req.login(user, (err) => {
-        if (err) return next(err);
-        res.status(201).json(user);
+      // Generate JWT token
+      const token = generateToken(user);
+      
+      // Set token in cookie and response
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+      });
+      
+      // Return user data without password
+      const { password, ...userData } = user;
+      res.status(201).json({
+        ...userData,
+        token
       });
     } catch (error) {
-      next(error);
+      console.error("Registration error:", error);
+      res.status(500).json({ message: "Error creating user account" });
     }
   });
 
+  // Login endpoint
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err: Error | null, user: any, info: { message: string }) => {
+    passport.authenticate("local", (err: Error | null, user: User | false, info: { message: string } | undefined) => {
       if (err) {
-        return next(err);
+        return res.status(500).json({ message: "Authentication error" });
       }
+      
       if (!user) {
         return res.status(401).json({ message: info?.message || "Invalid username or password" });
       }
-      req.login(user, (err: Error | null) => {
-        if (err) {
-          return next(err);
-        }
-        return res.status(200).json(user);
+      
+      // Generate JWT token
+      const token = generateToken(user);
+      
+      // Set token in cookie and response
+      res.cookie("token", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 1 week
+      });
+      
+      // Return user data without password
+      const { password, ...userData } = user;
+      res.status(200).json({
+        ...userData,
+        token
       });
     })(req, res, next);
   });
 
-  app.post("/api/logout", (req, res, next) => {
-    req.logout((err) => {
-      if (err) return next(err);
-      res.sendStatus(200);
-    });
+  // Logout endpoint
+  app.post("/api/logout", (_req, res) => {
+    res.clearCookie("token");
+    res.status(200).json({ message: "Logged out successfully" });
   });
 
-  app.get("/api/user", (req, res) => {
-    if (!req.isAuthenticated()) return res.sendStatus(401);
+  // Get current user endpoint
+  app.get("/api/user", isAuthenticated, (req, res) => {
     res.json(req.user);
   });
 }

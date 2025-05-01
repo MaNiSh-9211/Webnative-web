@@ -2,12 +2,8 @@ import { db } from "@db";
 import { users } from "@shared/schema";
 import { eq, or, and, isNull } from "drizzle-orm";
 import { InsertUser, User, UpsertUser } from "@shared/schema";
-import session from "express-session";
-import connectPg from "connect-pg-simple";
 import { pool } from "@db";
 import mongoose from "mongoose";
-
-const PostgresSessionStore = connectPg(session);
 
 // Define the OAuth user data interface
 interface OAuthUserData {
@@ -27,17 +23,13 @@ interface IStorage {
   getUserByProviderId(providerId: string, provider: string): Promise<User | undefined>;
   findOrCreateOAuthUser(userData: OAuthUserData): Promise<User>;
   upsertUser(user: UpsertUser): Promise<User>;
-  sessionStore: session.Store;
 }
 
 class DatabaseStorage implements IStorage {
-  sessionStore: session.Store;
-
   constructor() {
-    this.sessionStore = new PostgresSessionStore({ 
-      pool, 
-      createTableIfMissing: true 
-    });
+    // Initialize mongoose connection for MongoDB
+    const dbUri = process.env.MONGODB_URI || 'mongodb+srv://USER:PASSWORD@cluster.mongodb.net/webnative?retryWrites=true&w=majority';
+    mongoose.connect(dbUri);
   }
 
   async createUser(userData: InsertUser): Promise<User> {
