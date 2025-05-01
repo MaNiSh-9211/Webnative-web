@@ -1,6 +1,5 @@
-import { useState } from "react";
-import { useAuth } from "@/hooks/use-auth";
-import { Redirect } from "wouter";
+import { useState, useEffect } from "react";
+import { Redirect, useLocation } from "wouter";
 import { Helmet } from "react-helmet";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
@@ -17,6 +16,10 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Loader2 } from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
+import { useMutation, useQuery } from "@tanstack/react-query";
+import { apiRequest } from "@/lib/queryClient";
+import type { User } from "@shared/schema";
 
 const loginSchema = z.object({
   username: z.string().min(2, "Username must be at least 2 characters"),
@@ -37,7 +40,78 @@ type RegisterFormValues = z.infer<typeof registerSchema>;
 
 export default function AuthPage() {
   const [activeTab, setActiveTab] = useState("login");
-  const { user, loginMutation, registerMutation } = useAuth();
+  const [_, navigate] = useLocation();
+  const { toast } = useToast();
+  
+  // Fetch the current user
+  const { data: user, isLoading: userLoading } = useQuery({
+    queryKey: ['/api/user'],
+    queryFn: async () => {
+      try {
+        const res = await fetch('/api/user');
+        if (res.ok) {
+          return res.json();
+        }
+        return null;
+      } catch (error) {
+        console.error("Error fetching user:", error);
+        return null;
+      }
+    },
+    retry: false
+  });
+
+  // Login mutation
+  const loginMutation = useMutation({
+    mutationFn: async (credentials: LoginFormValues) => {
+      const res = await apiRequest("POST", "/api/login", credentials);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Login failed");
+      }
+      return await res.json() as User;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Welcome back!",
+        description: "You have successfully logged in.",
+      });
+      navigate("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Login failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  // Register mutation
+  const registerMutation = useMutation({
+    mutationFn: async (userData: Omit<RegisterFormValues, "confirmPassword">) => {
+      const res = await apiRequest("POST", "/api/register", userData);
+      if (!res.ok) {
+        const errorText = await res.text();
+        throw new Error(errorText || "Registration failed");
+      }
+      return await res.json() as User;
+    },
+    onSuccess: () => {
+      toast({
+        title: "Account created!",
+        description: "Your account has been created successfully.",
+      });
+      navigate("/");
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Registration failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
   
   const loginForm = useForm<LoginFormValues>({
     resolver: zodResolver(loginSchema),
@@ -66,7 +140,7 @@ export default function AuthPage() {
   };
   
   // Redirect if user is already logged in
-  if (user) {
+  if (user && !userLoading) {
     return <Redirect to="/" />;
   }
   
