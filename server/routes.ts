@@ -2,14 +2,7 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
-
-// Middleware to check if user is authenticated
-const isAuthenticated = (req: any, res: any, next: any) => {
-  if (req.isAuthenticated()) {
-    return next();
-  }
-  res.status(401).json({ message: "Unauthorized" });
-};
+import { isAuthenticated, refreshToken } from "./jwt";
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Set up authentication middleware (both traditional and OAuth)
@@ -22,10 +15,23 @@ export async function registerRoutes(app: Express): Promise<Server> {
   
   // Get current user endpoint
   app.get('/api/user', (req, res) => {
-    if (req.isAuthenticated()) {
-      res.json(req.user);
-    } else {
-      res.status(200).json(null);
+    // The isAuthenticated middleware already returns 401 if not authenticated
+    // But we want to allow this specific endpoint to return null if not authenticated
+    // So we check for a token, but don't return an error
+    const token = req.headers.authorization?.split(' ')[1] || req.cookies?.token;
+    
+    if (!token) {
+      return res.status(401).json({ message: "Unauthorized - No token provided" });
+    }
+    
+    // Extract user info from token
+    try {
+      // Will get user info from middleware
+      isAuthenticated(req, res, () => {
+        res.json(req.user);
+      });
+    } catch (error) {
+      res.status(401).json({ message: "Unauthorized - Invalid token" });
     }
   });
 
