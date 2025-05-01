@@ -53,12 +53,17 @@ class MongoDBStorage implements IMongoStorage {
   async getUser(id: number): Promise<User | undefined> {
     try {
       // Since we're using a numeric ID for the app but MongoDB uses ObjectId,
-      // we need to find the user by username (which is unique)
+      // we need to find the user by a different approach
       // This approach isn't ideal for production but works for our demo
       const allUsers = await UserModel.find();
-      const user = allUsers.find(user => 
-        parseInt(user._id.toString().substring(0, 8), 16) === id
-      );
+      const user = allUsers.find(user => {
+        const userId = user._id?.toString();
+        if (!userId) return false;
+        
+        // Generate a numeric ID from the first 8 chars of the ObjectId
+        const numericId = parseInt(userId.substring(0, 8), 16);
+        return numericId === id;
+      });
       
       if (!user) return undefined;
       return this.convertMongoUser(user);

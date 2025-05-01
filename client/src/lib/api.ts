@@ -9,35 +9,58 @@ interface ApiResponse<T> {
 }
 
 // File or directory entry returned by list
-interface FileEntry {
+export interface FileEntry {
   name: string;
-  type: 'file' | 'directory';
+  isDirectory: boolean;
+  fullPath: string;
   size?: number;
   lastModified?: string;
 }
 
 // Metadata returned by meta
-interface FileMeta {
+export interface FileMeta {
   name: string;
-  type: 'file' | 'directory';
+  type?: 'file' | 'directory';
   size?: number;
   created?: string;
   lastModified?: string;
+  accessed?: string;
+  changed?: string;
   isHidden?: boolean;
   permissions?: string;
+  path?: string;
+  extension?: string;
+  directory?: string;
+  absolutePath?: string;
+  isFile?: boolean;
+  isDirectory?: boolean;
+  isSymbolicLink?: boolean;
+  mimeType?: string;
+  modified?: string; 
+  mode?: string;
+  uid?: number;
+  gid?: number;
+  device?: number;
+  inode?: number;
+  hardLinks?: number;
+  blocks?: number;
+  blockSize?: number;
 }
 
-// Command execution result
+
 interface CommandResult {
-  stdout: string;
-  stderr: string;
-  exitCode: number;
+  command: string;
+  stdout: string[];
+  stderr: string[];
+  error: string | null;
 }
 
 // Return paths result
 interface PathsResult {
   paths: string[];
 }
+
+
 
 export async function getDrives(): Promise<string[]> {
   try {
@@ -55,14 +78,21 @@ export async function getDrives(): Promise<string[]> {
   }
 }
 
-export async function listDirectory(path: string): Promise<FileEntry[]> {
+
+
+export async function listDirectory(path: string): Promise<{ success: boolean; entries: FileEntry[] }> {
   try {
     const res = await fetch(`${BASE_URL}/fs/list?path=${encodeURIComponent(path)}`);
     const data = await res.json();
-    if (data.success) {
-      return data.entries;
+
+    if (data.success && Array.isArray(data.entries)) {
+      return {
+        success: true,
+        entries: data.entries
+      };
     }
-    throw new Error(data.error || 'Failed to list directory');
+
+    throw new Error(data.error || 'Invalid response format from server');
   } catch (error) {
     if (error instanceof Error) {
       throw error;
@@ -122,6 +152,8 @@ export async function appendFile(path: string, content: string): Promise<boolean
   }
 }
 
+
+
 export async function getFileMeta(path: string): Promise<FileMeta> {
   try {
     const res = await fetch(`${BASE_URL}/fs/meta?path=${encodeURIComponent(path)}`);
@@ -151,6 +183,8 @@ export async function checkExists(path: string): Promise<boolean> {
   }
 }
 
+
+
 export async function runCommand(command: string): Promise<CommandResult> {
   try {
     const res = await fetch(`${BASE_URL}/cmd/run`, {
@@ -160,7 +194,12 @@ export async function runCommand(command: string): Promise<CommandResult> {
     });
     const data = await res.json();
     if (data.success) {
-      return data.result;
+      return {
+        command: data.command,
+        stdout: data.stdout,
+        stderr: data.stderr,
+        error: data.error
+      };
     }
     throw new Error(data.error || 'Failed to run command');
   } catch (error) {
@@ -170,6 +209,7 @@ export async function runCommand(command: string): Promise<CommandResult> {
     throw new Error('Unknown error occurred while running command');
   }
 }
+
 
 export async function exploreSystem(): Promise<any> {
   try {

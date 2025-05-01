@@ -10,9 +10,13 @@ export function setupOAuth(app: Express): void {
   passport.use(
     new GoogleStrategy(
       {
-        clientID: process.env.GOOGLE_CLIENT_ID!,
-        clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
-        callbackURL: `${process.env.BASE_URL || "http://localhost:3000"}/api/auth/google/callback`,
+        // clientID: process.env.GOOGLE_CLIENT_ID!,
+        // clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+        // callbackURL: `${process.env.BASE_URL || "http://localhost:3000"}/api/auth/google/callback`,
+        clientID: "862014520901-ev2imnr3qhosb9m3598q6vpvg2mnj6pc.apps.googleusercontent.com",  // Hardcoded Google Client ID
+        clientSecret: "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",  // Hardcoded Google Client Secret
+        callbackURL: "http://localhost:3000/api/auth/google/callback",  // Hardcoded callback URL
+  
       },
       async (accessToken: string, refreshToken: string, profile: any, done: (error: Error | null, user?: any) => void) => {
         try {
@@ -38,9 +42,12 @@ export function setupOAuth(app: Express): void {
   passport.use(
     new GitHubStrategy(
       {
-        clientID: process.env.GITHUB_CLIENT_ID!,
-        clientSecret: process.env.GITHUB_CLIENT_SECRET!,
-        callbackURL: `${process.env.BASE_URL || "http://localhost:3000"}/api/auth/github/callback`,
+        // clientID: process.env.GITHUB_CLIENT_ID!,
+        // clientSecret: process.env.GITHUB_CLIENT_SECRET!,
+        // callbackURL: `${process.env.BASE_URL || "http://localhost:3000"}/api/auth/github/callback`,
+        clientID: "Ov23liODiGJbbMeXWRaM",  // Hardcoded GitHub Client ID
+        clientSecret: "472c30257622734ece7487fad61e78d3b766cbd5",  // Hardcoded GitHub Client Secret
+        callbackURL: "http://localhost:3000/api/auth/github/callback",  // Hardcoded callback URL
       },
       async (accessToken: string, refreshToken: string, profile: any, done: (error: Error | null, user?: any) => void) => {
         try {

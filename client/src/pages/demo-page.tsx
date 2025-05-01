@@ -32,6 +32,7 @@ import {
   checkExists,
   runCommand,
   exploreSystem,
+  FileEntry,
   resolveFilePath,
   resolveFolderPath
 } from "@/lib/api";
@@ -123,6 +124,8 @@ export default function DemoPage() {
     }
   };
   
+
+  
   const handleListDirectory = async () => {
     if (!directoryPath) {
       toast({
@@ -132,19 +135,20 @@ export default function DemoPage() {
       });
       return;
     }
-    
+  
     try {
       setIsLoading(true);
-      const entries = await listDirectory(directoryPath);
+      const response = await listDirectory(directoryPath);
+  
+      if (!response.success || !Array.isArray(response.entries)) {
+        appendToOutput("> Invalid response format from server");
+        return;
+      }
+  
       appendToOutput(`> Directory ${directoryPath} listed`);
-      
-      entries.forEach(entry => {
-        if (entry.type === 'directory') {
-          appendToOutput(`[Folder] ${entry.name}`);
-        } else {
-          const sizeStr = entry.size !== undefined ? ` (${formatFileSize(entry.size)})` : '';
-          appendToOutput(`[File] ${entry.name}${sizeStr}`);
-        }
+  
+      response.entries.forEach((entry: FileEntry) => {
+        appendToOutput(JSON.stringify(entry, null, 2)); // full object, pretty printed
       });
     } catch (error) {
       appendToOutput(`> Error listing directory: ${error instanceof Error ? error.message : String(error)}`);
@@ -152,6 +156,8 @@ export default function DemoPage() {
       setIsLoading(false);
     }
   };
+  
+
   
   const handleReadFile = async () => {
     if (!filePath) {
@@ -219,6 +225,8 @@ export default function DemoPage() {
     }
   };
   
+
+  
   const handleGetFileMeta = async () => {
     if (!filePath) {
       toast({
@@ -228,17 +236,21 @@ export default function DemoPage() {
       });
       return;
     }
-    
+  
     try {
       setIsLoading(true);
       const meta = await getFileMeta(filePath);
       appendToOutput(`> Metadata for: ${filePath}`);
-      appendToOutput(`Type: ${meta.type}`);
+      appendToOutput(`Type: ${meta.isDirectory ? 'directory' : 'file'}`);
       if (meta.size !== undefined) appendToOutput(`Size: ${formatFileSize(meta.size)}`);
       if (meta.created) appendToOutput(`Created: ${meta.created}`);
-      if (meta.lastModified) appendToOutput(`Last Modified: ${meta.lastModified}`);
-      if (meta.isHidden !== undefined) appendToOutput(`Hidden: ${meta.isHidden}`);
+      if (meta.modified) appendToOutput(`Modified: ${meta.modified}`);
+      if (meta.accessed) appendToOutput(`Accessed: ${meta.accessed}`);
+      if (meta.changed) appendToOutput(`Changed: ${meta.changed}`);
+      if (meta.mimeType) appendToOutput(`MIME Type: ${meta.mimeType}`);
       if (meta.permissions) appendToOutput(`Permissions: ${meta.permissions}`);
+      if (meta.mode) appendToOutput(`Mode: ${meta.mode}`);
+      appendToOutput(`\nFull Metadata:\n${JSON.stringify(meta, null, 2)}`);
     } catch (error) {
       appendToOutput(`> Error getting metadata: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
@@ -246,6 +258,7 @@ export default function DemoPage() {
     }
   };
   
+
   const handleCheckExists = async () => {
     if (!filePath) {
       toast({
@@ -267,6 +280,9 @@ export default function DemoPage() {
     }
   };
   
+  
+
+
   const handleRunCommand = async () => {
     if (!commandInput) {
       toast({
@@ -276,24 +292,19 @@ export default function DemoPage() {
       });
       return;
     }
-    
+  
     try {
       setIsLoading(true);
       const result = await runCommand(commandInput);
       appendToOutput(`> Command executed: ${commandInput}`);
-      if (result.stdout) {
-        appendToOutput(`Output: ${result.stdout}`);
-      }
-      if (result.stderr) {
-        appendToOutput(`Error: ${result.stderr}`);
-      }
-      appendToOutput(`Exit code: ${result.exitCode}`);
+      appendToOutput(JSON.stringify(result, null, 2)); // 👈 full pretty-printed output
     } catch (error) {
       appendToOutput(`> Error running command: ${error instanceof Error ? error.message : String(error)}`);
     } finally {
       setIsLoading(false);
     }
   };
+
   
   const handleExploreSystem = async () => {
     try {

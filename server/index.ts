@@ -3,10 +3,13 @@ import { registerRoutes } from "./routes";
 import { setupVite, serveStatic, log } from "./vite";
 import mongoose from "mongoose";
 import cookieParser from "cookie-parser";
+import dotenv from 'dotenv';
+dotenv.config();
 
+const MONGO_URI = "mongodb+srv://USER:PASSWORD@cluster.mongodb.net/webnative?retryWrites=true&w=majority";
 // Connect to MongoDB for traditional authentication if MONGO_URI is provided
-if (process.env.MONGO_URI) {
-  mongoose.connect(process.env.MONGO_URI)
+if (MONGO_URI) {
+  mongoose.connect(MONGO_URI)
     .then(() => {
       console.log("Connected to MongoDB");
     })
@@ -73,7 +76,7 @@ app.use((req, res, next) => {
   // ALWAYS serve the app on port 5000
   // this serves both the API and the client.
   // It is the only port that is not firewalled.
-  const port = 5000;
+  const port = 3000;
   server.listen({
     port,
     host: "0.0.0.0",
