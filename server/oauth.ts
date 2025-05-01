@@ -75,8 +75,23 @@ export function setupOAuth(app: Express): void {
     }),
     (req, res) => {
       if (req.user) {
+        // Create a complete user object for token generation
+        const user = req.user as any;
+        const tokenData = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          provider: user.provider,
+          displayName: user.displayName,
+          profilePicture: user.profilePicture,
+          providerId: user.providerId,
+          createdAt: user.createdAt || new Date(),
+          updatedAt: user.updatedAt || null,
+          password: null
+        };
+        
         // Generate JWT token
-        const token = generateToken(req.user);
+        const token = generateToken(tokenData);
         
         // Set the token as a cookie
         res.cookie("token", token, {
@@ -102,8 +117,23 @@ export function setupOAuth(app: Express): void {
     }),
     (req, res) => {
       if (req.user) {
+        // Create a complete user object for token generation
+        const user = req.user as any;
+        const tokenData = {
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          provider: user.provider,
+          displayName: user.displayName,
+          profilePicture: user.profilePicture,
+          providerId: user.providerId,
+          createdAt: user.createdAt || new Date(),
+          updatedAt: user.updatedAt || null,
+          password: null
+        };
+        
         // Generate JWT token
-        const token = generateToken(req.user);
+        const token = generateToken(tokenData);
         
         // Set the token as a cookie
         res.cookie("token", token, {

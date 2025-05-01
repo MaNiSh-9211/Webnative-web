@@ -9,9 +9,21 @@ import { User } from "@shared/schema";
 import { setupOAuth } from "./oauth";
 import { generateToken, isAuthenticated } from "./jwt";
 
+// Extend Express User interface to include our User type properties
 declare global {
   namespace Express {
-    interface User extends User {}
+    interface User {
+      id: number;
+      username: string;
+      email: string | null;
+      password: string | null;
+      displayName: string | null;
+      profilePicture: string | null;
+      provider: string | null;
+      providerId: string | null;
+      createdAt: Date;
+      updatedAt: Date | null;
+    }
   }
 }
 

@@ -60,14 +60,19 @@ export function refreshToken(req: any, res: any, next: any) {
       const tokenExp = decoded.exp;
       
       if (tokenExp - currentTime < 86400) { // 24 hours in seconds
-        // Generate a new token
-        const user: User = {
+        // Generate a new token with minimal required fields
+        const user = {
           id: decoded.id,
           username: decoded.username,
           email: decoded.email,
           provider: decoded.provider,
           displayName: decoded.displayName,
           createdAt: new Date(),
+          // Add other required fields with null values
+          password: null,
+          profilePicture: null,
+          providerId: null,
+          updatedAt: null
         };
         
         const newToken = generateToken(user);
