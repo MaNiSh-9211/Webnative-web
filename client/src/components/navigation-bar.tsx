@@ -59,6 +59,11 @@ export default function NavigationBar() {
                   Sign Out
                 </button>
               </div>
+            ) : isLoading ? (
+              <div className="text-[#d1d5db] flex items-center">
+                <span className="w-4 h-4 border-t-2 border-b-2 border-[#8a63d2] rounded-full animate-spin mr-2"></span>
+                Checking...
+              </div>
             ) : (
               <Link href="/auth" className="text-[#d1d5db] hover:text-white transition duration-300">
                 Sign In
@@ -102,8 +107,9 @@ export default function NavigationBar() {
             </Link>
             {user ? (
               <>
-                <Link href="/profile" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">
-                  Profile ({user.username})
+                <Link href="/profile" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300 flex items-center">
+                  <UserIcon className="w-4 h-4 mr-2" /> 
+                  Profile ({user.displayName || user.username})
                 </Link>
                 <button
                   onClick={() => {
@@ -116,6 +122,11 @@ export default function NavigationBar() {
                   Sign Out
                 </button>
               </>
+            ) : isLoading ? (
+              <div className="block px-3 py-2 text-[#d1d5db] flex items-center">
+                <span className="w-4 h-4 border-t-2 border-b-2 border-[#8a63d2] rounded-full animate-spin mr-2"></span>
+                Checking...
+              </div>
             ) : (
               <Link href="/auth" className="block px-3 py-2 text-[#d1d5db] hover:text-white transition duration-300">
                 Sign In
