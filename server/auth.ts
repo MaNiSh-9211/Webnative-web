@@ -61,7 +61,7 @@ export function setupAuth(app: Express) {
           return done(null, false, { message: "Please login using OAuth provider" });
         }
         
-        if (!(await comparePasswords(password, user.password))) {
+        if (!(await comparePasswords(password, user.password || ''))) {
           return done(null, false, { message: "Incorrect password" });
         }
         
@@ -104,14 +104,14 @@ export function setupAuth(app: Express) {
   });
 
   app.post("/api/login", (req, res, next) => {
-    passport.authenticate("local", (err, user, info) => {
+    passport.authenticate("local", (err: Error | null, user: any, info: { message: string }) => {
       if (err) {
         return next(err);
       }
       if (!user) {
-        return res.status(401).json({ message: "Invalid username or password" });
+        return res.status(401).json({ message: info?.message || "Invalid username or password" });
       }
-      req.login(user, (err) => {
+      req.login(user, (err: Error | null) => {
         if (err) {
           return next(err);
         }

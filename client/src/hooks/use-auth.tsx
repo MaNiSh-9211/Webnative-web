@@ -15,6 +15,8 @@ type AuthContextType = {
   loginMutation: UseMutationResult<SelectUser, Error, LoginData>;
   logoutMutation: UseMutationResult<void, Error, void>;
   registerMutation: UseMutationResult<SelectUser, Error, InsertUser>;
+  loginWithGoogle: () => void;
+  loginWithGithub: () => void;
 };
 
 type LoginData = Pick<InsertUser, "username" | "password">;
@@ -93,6 +95,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
   });
 
+  // OAuth login functions
+  const loginWithGoogle = () => {
+    window.location.href = '/api/auth/google';
+  };
+
+  const loginWithGithub = () => {
+    window.location.href = '/api/auth/github';
+  };
+
   return (
     <AuthContext.Provider
       value={{
@@ -102,6 +113,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
         loginMutation,
         logoutMutation,
         registerMutation,
+        loginWithGoogle,
+        loginWithGithub
       }}
     >
       {children}
